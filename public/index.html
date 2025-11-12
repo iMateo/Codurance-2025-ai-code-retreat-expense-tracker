@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Expense Tracker</h1>
+            <p>Manage your expenses with ease</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-button active" onclick="showTab('expenses')">All Expenses</button>
+            <button class="tab-button" onclick="showTab('categories')">Categories</button>
+            <button class="tab-button" onclick="showTab('add-expense')">Add Expense</button>
+            <button class="tab-button" onclick="showTab('reports')">Reports</button>
+        </nav>
+
+        <!-- All Expenses Tab -->
+        <div id="expenses" class="tab-content active">
+            <div class="section-header">
+                <h2>📊 All Expenses</h2>
+                <div class="filters">
+                    <select id="categoryFilter" onchange="filterExpenses()">
+                        <option value="">All Categories</option>
+                    </select>
+                    <input type="date" id="dateFilter" onchange="filterExpenses()">
+                    <button onclick="clearFilters()">Clear Filters</button>
+                </div>
+            </div>
+            
+            <div class="expense-summary" id="expenseSummary">
+                <!-- Summary will be populated by JavaScript -->
+            </div>
+
+            <div class="table-container">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>User</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <!-- Expenses will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Categories Tab -->
+        <div id="categories" class="tab-content">
+            <div class="section-header">
+                <h2>📁 Categories</h2>
+                <button class="btn btn-primary" onclick="showAddCategoryForm()">Add Category</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="categoryTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Budget</th>
+                            <th>Spent</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoryTableBody">
+                        <!-- Categories will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Expense Tab -->
+        <div id="add-expense" class="tab-content">
+            <div class="section-header">
+                <h2>➕ Add New Expense</h2>
+            </div>
+            
+            <form id="addExpenseForm" class="expense-form">
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" name="amount" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userId">User ID:</label>
+                    <input type="text" id="userId" name="userId" value="user1" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Add Expense</button>
+                <button type="reset" class="btn btn-secondary">Clear Form</button>
+            </form>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content">
+            <div class="section-header">
+                <h2>📈 Reports & Analytics</h2>
+            </div>
+            
+            <div class="reports-grid">
+                <div class="report-card">
+                    <h3>Monthly Summary</h3>
+                    <div id="monthlySummary">
+                        <!-- Monthly data will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <h3>Category Breakdown</h3>
+                    <div id="categoryBreakdown">
+                        <!-- Category breakdown will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity">
+                        <!-- Recent activity will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
