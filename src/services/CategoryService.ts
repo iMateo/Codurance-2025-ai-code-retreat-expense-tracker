@@ -385,16 +385,16 @@ class CreateCategoryCommand extends CategoryCommand {
     if (!validationResult.isValid) {
       throw new Error(validationResult.errors[0]);
     }
-    
+
     const existingCategory = this.repository.findByName(this.request.name);
-    if (existingCategory && existingCategory.isActive) {
+    if (existingCategory) {
       throw new Error('Category already exists');
     }
-    
+
     const category = this.factory.createCategory(this.request);
     const savedCategory = this.repository.save(category);
     this.auditLogger.logCreation(savedCategory);
-    
+
     return savedCategory;
   }
 }

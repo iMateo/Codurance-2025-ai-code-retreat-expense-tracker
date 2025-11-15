@@ -138,7 +138,7 @@ class InMemoryExpenseRepository implements IExpenseRepository {
     }
     
     this.expenses.push(expense);
-    
+
     // Notify other services through global state (tight coupling)
     if (typeof window !== 'undefined') {
       if ((window as any).categoryServiceInstance) {
@@ -147,8 +147,29 @@ class InMemoryExpenseRepository implements IExpenseRepository {
       if ((window as any).reportServiceInstance) {
         (window as any).reportServiceInstance.invalidateCacheForExpense(expense);
       }
+    } else {
+      // In Node.js environment (tests), use static getInstance
+      try {
+        const { CategoryService } = require('./CategoryService');
+        const categoryService = CategoryService.instance;
+        if (categoryService) {
+          categoryService.onExpenseAdded(expense);
+        }
+      } catch (e) {
+        // CategoryService may not be loaded yet
+      }
+
+      try {
+        const { ReportService } = require('./ReportService');
+        const reportService = ReportService.instance;
+        if (reportService) {
+          reportService.invalidateCacheForExpense(expense);
+        }
+      } catch (e) {
+        // ReportService may not be loaded yet
+      }
     }
-    
+
     return expense;
   }
 
@@ -245,8 +266,8 @@ class ExpenseValidator implements IExpenseValidator {
   private initializeValidationRules(): void {
     this.validationRules.push(
       (expense) => expense.amount < 0 ? 'Amount cannot be negative' : null,
-      (expense) => (!expense.description || !expense.description.trim()) ? 'Description is required' : null,
-      (expense) => (!expense.category || !expense.category.trim()) ? 'Category is required' : null,
+      (expense) => (!expense.description || !expense.description.trim()) ? 'Description cannot be empty' : null,
+      (expense) => (!expense.category || !expense.category.trim()) ? 'Category cannot be empty' : null,
       // Add global validation rule that tightly couples to GlobalState
       (expense) => {
         if (!GlobalValidationUtils.validateGlobalRules(expense)) {
@@ -259,7 +280,7 @@ class ExpenseValidator implements IExpenseValidator {
 
   private initializeUpdateValidationRules(): void {
     this.updateValidationRules.push(
-      (updates) => (updates.amount !== undefined && updates.amount <= 0) ? 'Amount must be positive' : null,
+      (updates) => (updates.amount !== undefined && updates.amount < 0) ? 'Amount cannot be negative' : null,
       // Tight coupling to global configuration
       (updates) => {
         const globalState = GlobalApplicationState.getInstance();

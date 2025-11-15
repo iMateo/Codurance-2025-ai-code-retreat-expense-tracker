@@ -7,6 +7,11 @@ const expenseService = tracker.getExpenseService();
 const categoryService = tracker.getCategoryService();
 const reportService = tracker.getReportService();
 
+// Make services available globally for calendar and notifications
+window.expenseService = expenseService;
+window.categoryService = categoryService;
+window.reportService = reportService;
+
 // Global state
 let currentExpenses = [];
 let currentCategories = [];
@@ -166,6 +171,9 @@ function calculateCategorySpent(categoryName) {
         .reduce((sum, expense) => sum + expense.amount, 0);
 }
 
+// Make it available globally
+window.calculateCategorySpent = calculateCategorySpent;
+
 // Populate category dropdowns
 function populateCategoryDropdowns() {
     const categorySelect = document.getElementById('category');
@@ -204,6 +212,11 @@ function handleAddExpense(event) {
         event.target.reset();
         document.getElementById('date').valueAsDate = new Date(); // Reset to today
         loadExpenses(); // Refresh the expense list
+
+        // Check budget alerts after adding expense
+        if (window.checkBudgetAlerts) {
+            setTimeout(() => window.checkBudgetAlerts(), 500);
+        }
     } catch (error) {
         console.error('Error adding expense:', error);
         showError(`Failed to add expense: ${error.message}`);
@@ -353,13 +366,19 @@ function escapeHtml(text) {
 }
 
 function showSuccess(message) {
-    // Simple alert for now - could be replaced with toast notifications
-    alert(`✅ ${message}`);
+    if (window.notifications) {
+        window.notifications.success(message);
+    } else {
+        alert(`✅ ${message}`);
+    }
 }
 
 function showError(message) {
-    // Simple alert for now - could be replaced with toast notifications
-    alert(`❌ ${message}`);
+    if (window.notifications) {
+        window.notifications.error(message);
+    } else {
+        alert(`❌ ${message}`);
+    }
 }
 
 // Make functions available globally for onclick handlers
