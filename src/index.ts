@@ -1,7 +1,7 @@
-import { ExpenseService } from './services/ExpenseService';
-import { CategoryService } from './services/CategoryService';
-import { ReportService } from './services/ReportService';
-import { ExpenseUI } from './ui/ExpenseUI';
+import { ExpenseService } from './services/ExpenseService.js';
+import { CategoryService } from './services/CategoryService.js';
+import { ReportService } from './services/ReportService.js';
+import { ExpenseUI } from './ui/ExpenseUI.js';
 
 export class ExpenseTracker {
   private expenseService: ExpenseService;
@@ -50,5 +50,5 @@ const tracker = new ExpenseTracker();
 tracker.start();
 
 export { ExpenseService, CategoryService, ReportService };
-export * from './types/expense';
-export * from './utils/dateUtils';
+export * from './types/expense.js';
+export * from './utils/dateUtils.js';

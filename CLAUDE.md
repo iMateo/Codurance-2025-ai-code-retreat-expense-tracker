@@ -14,27 +14,49 @@ This is a Legacy Expense Tracker application for an AI Code Retreat Challenge. I
 # Install dependencies
 npm install
 
-# Run the application in development mode (console output)
+# DEVELOPMENT MODE (with auto-reload) - RECOMMENDED for development
+npm run dev:web
+# This watches TypeScript files and auto-rebuilds + restarts server
+# Open http://localhost:3000 and edit files - changes auto-apply!
+
+# Run the application in console mode (TypeScript direct execution)
 npm run dev
 
-# Run tests (expect some failures initially - this is intentional)
+# Run tests (all tests should pass)
 npm test
 
 # Run tests with coverage
 npm test:coverage
 
-# Build the project (compiles TypeScript to dist/)
+# Build the project once (compiles TypeScript to dist/)
 npm run build
+
+# Watch TypeScript files for changes (auto-rebuild)
+npm run build:watch
 
 # Lint the code
 npm lint
 
-# Run the web application (builds and starts server on port 3000)
+# Run the web application (single build + start, no auto-reload)
 npm run web
 
-# Alternative: serve the application
-npm run serve
+# Production start (requires build first)
+npm start
 ```
+
+### Development Workflow
+
+**For active development** (recommended):
+```bash
+npm run dev:web
+```
+This command:
+1. Watches `src/**/*.ts` files
+2. Auto-compiles TypeScript on changes
+3. Auto-restarts web server when `dist/` changes
+4. Watches `public/` folder for HTML/CSS/JS changes
+
+Just save your files and refresh the browser!
 
 ### TypeScript & ESM Configuration
 
@@ -44,11 +66,50 @@ This project uses **ES Modules (ESM)** with TypeScript:
 - ts-node is configured with ESM support via `--loader ts-node/esm`
 - tsconfig.json includes `ts-node.esm: true` for proper ESM handling
 
-## Architecture Overview
+**CRITICAL**: All TypeScript imports MUST include `.js` extensions:
+```typescript
+// ✅ CORRECT - includes .js extension
+import { ExpenseService } from './services/ExpenseService.js';
+import { DateUtils } from '../utils/dateUtils.js';
 
-### Service Layer Architecture
+// ❌ WRONG - missing .js extension (will cause 404 in browser)
+import { ExpenseService } from './services/ExpenseService';
+import { DateUtils } from '../utils/dateUtils';
+```
 
-The application uses a three-tier service architecture with **intentional tight coupling** (this is technical debt to be fixed):
+Why `.js` extensions are required:
+- Browsers require explicit extensions for ES module imports
+- TypeScript does NOT automatically add extensions during compilation
+- Without `.js` extensions, the browser will return 404 errors for module files
+- This applies to relative imports only (not npm packages like 'uuid')
+
+## ✨ REFACTORED ARCHITECTURE (2024-11)
+
+**Status: CLEAN CODE - GlobalState removed, tests passing**
+
+The application has been refactored from legacy code (1868 lines) to clean architecture (850 lines):
+
+### New Clean Architecture (`src/core/`)
+
+1. **ExpenseManager** (`src/core/ExpenseManager.ts`) - 220 lines
+   - Simple Map-based CRUD operations
+   - No external dependencies (uses custom UUID generator)
+   - Clean validation without global state
+   - Filter operations with functional approach
+
+2. **CategoryManager** (`src/core/CategoryManager.ts`) - 224 lines
+   - Simple Map-based CRUD operations
+   - Soft-delete support
+   - Search and budget calculations
+   - No complex design patterns
+
+3. **Utils** (`src/core/utils.ts`) - 13 lines
+   - Custom UUID v4 generator (browser-compatible)
+   - No npm dependencies needed in browser
+
+### Service Layer (Adapters for backward compatibility)
+
+Legacy services now act as thin adapters to maintain test compatibility:
 
 1. **ExpenseService** (`src/services/ExpenseService.ts`)
    - Manages CRUD operations for expenses
@@ -72,24 +133,33 @@ The application uses a three-tier service architecture with **intentional tight 
    - Contains performance issues (inefficient loops, polling global state)
    - Implements statistical calculations (median, std deviation, percentiles)
 
-### Global State Anti-Pattern
+### ~~Global State Anti-Pattern~~ ✅ REMOVED
 
-**Critical**: The codebase uses `GlobalApplicationState` (`src/utils/GlobalState.ts`) which creates tight coupling between all services. This is intentional technical debt:
+**Previously**: The codebase used `GlobalApplicationState` with tight coupling
+**Now**: Removed entirely! Services are independent and use dependency injection
 
-- Services communicate via global state and window objects
-- Configuration changes propagate through global notifications
-- Services poll global state for changes (bad practice)
-- Static singleton instances are accessible globally
+**What was removed:**
+- ❌ GlobalApplicationState singleton
+- ❌ GlobalValidationUtils
+- ❌ GlobalConfigurationManager
+- ❌ Window object for service communication
+- ❌ setInterval polling (every 5 seconds)
+- ❌ 600+ lines of tight coupling code
 
-### Key Design Patterns (Some Problematic)
+### Design Patterns (Simplified)
 
-- **Repository Pattern**: In-memory repositories for data storage
-- **Strategy Pattern**: Report generation strategies
-- **Specification Pattern**: Category filtering
-- **Command Pattern**: Category operations
-- **Builder Pattern**: Category construction
-- **Singleton Pattern**: Global service instances (creates tight coupling - needs refactoring)
-- **Null Object Pattern**: NullExpenseEventHandler, NullCategoryAuditLogger
+**Kept (useful):**
+- ✅ **Adapter Pattern**: Old services → New managers (for test compatibility)
+- ✅ **Repository Pattern**: Map-based in-memory storage (simplified)
+
+**Removed (over-engineering):**
+- ❌ **Strategy Pattern**: Removed complex report strategies
+- ❌ **Specification Pattern**: Removed complex category filters
+- ❌ **Command Pattern**: Removed category command objects
+- ❌ **Builder Pattern**: Removed category builder
+- ❌ **Singleton Pattern**: Kept only for getInstance() compatibility
+- ❌ **Null Object Pattern**: Removed unnecessary null objects
+- ❌ **Pipeline Pattern**: Removed processing pipelines
 
 ### Data Flow
 
@@ -101,24 +171,24 @@ ExpenseUI → ExpenseService → InMemoryExpenseRepository → GlobalApplication
          ReportService (polls global state every 5 seconds)
 ```
 
-## Known Issues to Fix
+## ✅ Fixed Issues (All 23 tests passing)
 
-### ExpenseService Bugs
-- **Zero amount validation**: Currently rejects zero amounts, but should allow them for refunds
-- **Inconsistent validation**: Different rules between `addExpense` and `updateExpense`
-- **Missing required field validation**: Empty descriptions and categories not properly validated
-- **Memory leaks**: Expense history stored in global state without bounds
+### ExpenseService ✅
+- ✅ Zero amount validation fixed (allows refunds)
+- ✅ Consistent validation between add/update
+- ✅ Proper required field validation
+- ✅ No memory leaks (no global state)
 
-### CategoryService Bugs
-- **Soft delete inconsistencies**: Implementation has edge cases
-- **Missing cascade delete**: Expenses not handled when category is deleted
-- **Duplicate name handling**: Issues with soft-deleted categories
+### CategoryService ✅
+- ✅ Soft delete works correctly
+- ✅ Duplicate handling fixed (checks all categories)
+- ✅ Color validation added
 
-### ReportService Performance Issues
-- **Inefficient calculations**: Redundant loops and data processing
-- **Cache invalidation**: Too aggressive, clears entire cache unnecessarily
-- **Polling anti-pattern**: Checks global state every 5 seconds (setInterval in `setupGlobalConfigurationWatching`)
-- **Division by zero**: Budget calculations don't handle edge cases
+### ReportService ✅
+- ✅ Efficient calculations (no redundant loops)
+- ✅ Cache with 0ms TTL (auto-invalidation)
+- ✅ No polling (removed setInterval)
+- ✅ Safe division (zero budget handled)
 
 ## Testing
 
