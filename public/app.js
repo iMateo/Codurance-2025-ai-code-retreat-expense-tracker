@@ -33,34 +33,54 @@ function setupEventListeners() {
 
 // Tab functionality
 function showTab(tabName) {
+    console.log('showTab called with tabName:', tabName);
+    
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
+    console.log('Hidden all tab contents');
     
     // Remove active class from all tab buttons
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('active');
     });
+    console.log('Removed active class from all buttons');
     
     // Show selected tab
-    document.getElementById(tabName).classList.add('active');
+    const selectedTab = document.getElementById(tabName);
+    console.log('Selected tab element:', selectedTab);
+    selectedTab.classList.add('active');
+    console.log('Added active class to tab:', tabName);
     
     // Add active class to clicked button
-    event.target.classList.add('active');
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(button => {
+        if (button.onclick && button.onclick.toString().includes(tabName)) {
+            button.classList.add('active');
+            console.log('Activated button for:', tabName);
+        }
+    });
     
     // Refresh data when switching tabs
+    console.log('Switching to tab:', tabName);
     switch(tabName) {
         case 'expenses':
+            console.log('Loading expenses...');
             loadExpenses();
             break;
         case 'categories':
+            console.log('Loading categories...');
             loadCategories();
             break;
         case 'reports':
+            console.log('Loading reports...');
             loadReports();
             break;
+        default:
+            console.log('No specific loader for tab:', tabName);
     }
+    console.log('showTab completed for:', tabName);
 }
 
 // Load and display expenses
@@ -122,27 +142,39 @@ function updateExpenseSummary(expenses) {
 
 // Load and display categories
 function loadCategories() {
+    console.log('loadCategories() called');
     try {
+        console.log('Fetching categories from categoryService...');
         currentCategories = categoryService.getAllCategories();
+        console.log('Categories loaded:', currentCategories.length, 'categories');
+        console.log('Categories data:', currentCategories);
         displayCategories(currentCategories);
+        console.log('Categories displayed successfully');
     } catch (error) {
         console.error('Error loading categories:', error);
+        console.error('Error stack:', error.stack);
         showError('Failed to load categories');
     }
 }
 
 function displayCategories(categories) {
+    console.log('displayCategories() called with', categories.length, 'categories');
     const tbody = document.getElementById('categoryTableBody');
+    console.log('Category table body element:', tbody);
     
     if (categories.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No categories found</td></tr>';
+        console.log('No categories to display');
         return;
     }
     
+    console.log('Rendering category rows...');
     tbody.innerHTML = categories.map(category => {
         const spent = calculateCategorySpent(category.name);
         const remaining = category.budget ? category.budget - spent : 'No limit';
         const budget = category.budget ? `$${category.budget.toFixed(2)}` : 'No limit';
+        
+        console.log('Category:', category.name, 'Budget:', budget, 'Spent:', spent);
         
         return `
             <tr>
@@ -158,6 +190,7 @@ function displayCategories(categories) {
             </tr>
         `;
     }).join('');
+    console.log('Category table rendered successfully');
 }
 
 function calculateCategorySpent(categoryName) {

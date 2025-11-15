@@ -1,6 +1,6 @@
-import { Category, Expense } from '../types/expense';
+import { Category, Expense } from '../types/expense.js';
 import { v4 as uuidv4 } from 'uuid';
-import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState';
+import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState.js';
 
 interface ICategoryRepository {
   save(category: Category): Category;

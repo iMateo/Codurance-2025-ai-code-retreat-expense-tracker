@@ -1,7 +1,7 @@
-import { Expense, ExpenseFilter } from '../types/expense';
+import { Expense, ExpenseFilter } from '../types/expense.js';
 import { v4 as uuidv4 } from 'uuid';
-import { DateUtils } from '../utils/dateUtils';
-import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState';
+import { DateUtils } from '../utils/dateUtils.js';
+import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState.js';
 
 interface IExpenseRepository {
   findAll(): Expense[];

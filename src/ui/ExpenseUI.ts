@@ -1,6 +1,6 @@
-import { Expense } from '../types/expense';
-import { ExpenseService } from '../services/ExpenseService';
-import { CategoryService } from '../services/CategoryService';
+import { Expense } from '../types/expense.js';
+import { ExpenseService } from '../services/ExpenseService.js';
+import { CategoryService } from '../services/CategoryService.js';
 
 export class ExpenseUI {
   private expenseService: ExpenseService;

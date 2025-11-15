@@ -1,8 +1,8 @@
-import { Expense, ExpenseReport, Category } from '../types/expense';
-import { ExpenseService } from './ExpenseService';
-import { CategoryService } from './CategoryService';
-import { DateUtils } from '../utils/dateUtils';
-import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState';
+import { Expense, ExpenseReport, Category } from '../types/expense.js';
+import { ExpenseService } from './ExpenseService.js';
+import { CategoryService } from './CategoryService.js';
+import { DateUtils } from '../utils/dateUtils.js';
+import { GlobalApplicationState, GlobalValidationUtils, GlobalConfigurationManager } from '../utils/GlobalState.js';
 
 interface IReportDataProcessor<T> {
   process(data: T[]): ReportAnalytics;
@@ -546,8 +546,13 @@ export class ReportService {
   
   // Tight coupling - directly access global state and other services
   private setupGlobalConfigurationWatching(): void {
+    // Skip polling in test environment to prevent worker process issues
+    if (typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined)) {
+      return;
+    }
+
     // Poll global state for changes (bad practice but creates tight coupling)
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       const globalState = GlobalApplicationState.getInstance();
       const lastError = GlobalApplicationState.lastError;
       
@@ -570,6 +575,11 @@ export class ReportService {
         this.cache.clear(); // Clear cache when service changes
       }
     }, 5000); // Check every 5 seconds
+
+    // Allow process to exit even with active timer (Node.js only)
+    if (typeof intervalId === 'object' && 'unref' in intervalId) {
+      (intervalId as any).unref();
+    }
   }
   
   // Tightly coupled method that regenerates reports
@@ -736,7 +746,11 @@ export class ReportService {
   
   private generateCacheKey(type: string, context: any): string {
     const contextStr = JSON.stringify(context);
-    return `${type}-${Buffer.from(contextStr).toString('base64')}`;
+    // Use btoa for browser compatibility instead of Buffer
+    const base64 = typeof Buffer !== 'undefined' 
+      ? Buffer.from(contextStr).toString('base64')
+      : btoa(contextStr);
+    return `${type}-${base64}`;
   }
   
   clearReportCache(): void {
