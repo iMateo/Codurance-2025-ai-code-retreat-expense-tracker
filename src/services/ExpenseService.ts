@@ -1,5 +1,6 @@
 import { Expense, ExpenseFilter } from '../types/expense.js';
 import { ExpenseManager } from '../core/ExpenseManager.js';
+import { StorageService } from '../core/StorageService.js';
 
 /**
  * Adapter for old ExpenseService API
@@ -11,10 +12,33 @@ export class ExpenseService {
   private static instance: ExpenseService;
 
   constructor() {
-    this.manager = new ExpenseManager();
+    // Create manager with persistence callback
+    this.manager = new ExpenseManager(() => this.saveToStorage());
     ExpenseService.instance = this;
 
+    // Load data from localStorage if available
+    this.loadFromStorage();
+
     // Removed window registration - no longer needed
+  }
+
+  /**
+   * Save current state to localStorage
+   */
+  private saveToStorage(): void {
+    const expenses = this.manager.findAll();
+    StorageService.saveExpenses(expenses);
+  }
+
+  /**
+   * Load state from localStorage
+   */
+  private loadFromStorage(): void {
+    const stored = StorageService.loadExpenses();
+    if (stored && stored.length > 0) {
+      this.manager.clear();
+      this.manager.loadFromArray(stored);
+    }
   }
 
   public static getInstance(): ExpenseService {
