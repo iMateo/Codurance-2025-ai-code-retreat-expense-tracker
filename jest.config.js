@@ -14,8 +14,8 @@ export default {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true
     }]
-  },
-  moduleNameMapping: {
-    '^(\\.{1,2}/.*)\\.js$': '$1'
   }
+  // moduleNameMapping: {
+  //   '^(\\.{1,2}/.*)\\.js$': '$1'
+  // }
 };
