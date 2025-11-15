@@ -1,4 +1,4 @@
-import { Expense, Category } from '../types/expense';
+import { Expense, Category } from '../types/expense.js';
 
 // Global static state manager - tightly couples all services
 export class GlobalApplicationState {

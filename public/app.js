@@ -37,23 +37,28 @@ function setupEventListeners() {
 }
 
 // Tab functionality
-function showTab(tabName) {
+function showTab(tabName, buttonElement) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Remove active class from all tab buttons
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('active');
     });
-    
+
     // Show selected tab
-    document.getElementById(tabName).classList.add('active');
-    
-    // Add active class to clicked button
-    event.target.classList.add('active');
-    
+    const tabContent = document.getElementById(tabName);
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
+
+    // Add active class to the clicked button
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+
     // Refresh data when switching tabs
     switch(tabName) {
         case 'expenses':
@@ -65,8 +70,16 @@ function showTab(tabName) {
         case 'reports':
             loadReports();
             break;
+        case 'calendar':
+            if (window.renderCalendar) {
+                window.renderCalendar();
+            }
+            break;
     }
 }
+
+// Make showTab available globally immediately
+window.showTab = showTab;
 
 // Load and display expenses
 function loadExpenses() {
@@ -382,7 +395,6 @@ function showError(message) {
 }
 
 // Make functions available globally for onclick handlers
-window.showTab = showTab;
 window.filterExpenses = filterExpenses;
 window.clearFilters = clearFilters;
 window.deleteExpense = deleteExpense;
