@@ -6,7 +6,8 @@
       "Bash(for:*)",
       "Bash(do echo \"=== Run $i ===\")",
       "Bash(done)",
-      "Bash(npm run web:*)"
+      "Bash(npm run web:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
