@@ -265,9 +265,77 @@ class ExpenseValidator implements IExpenseValidator {
 
   private initializeValidationRules(): void {
     this.validationRules.push(
+      // Amount validations
+      (expense) => (expense.amount === undefined || expense.amount === null) ? 'Amount is required' : null,
+      (expense) => (typeof expense.amount !== 'number' || isNaN(expense.amount)) ? 'Amount must be a valid number' : null,
       (expense) => expense.amount < 0 ? 'Amount cannot be negative' : null,
+      
+      // Description validations
+      (expense) => (expense.description === undefined || expense.description === null) ? 'Description is required' : null,
+      (expense) => (typeof expense.description !== 'string') ? 'Description must be a string' : null,
       (expense) => (!expense.description || !expense.description.trim()) ? 'Description cannot be empty' : null,
+      (expense) => (expense.description && expense.description.length > 500) ? 'Description cannot exceed 500 characters' : null,
+      
+      // Category validations
+      (expense) => (expense.category === undefined || expense.category === null) ? 'Category is required' : null,
+      (expense) => (typeof expense.category !== 'string') ? 'Category must be a string' : null,
       (expense) => (!expense.category || !expense.category.trim()) ? 'Category cannot be empty' : null,
+      (expense) => (expense.category && expense.category.length > 100) ? 'Category cannot exceed 100 characters' : null,
+      
+      // Date validations
+      (expense) => (expense.date === undefined || expense.date === null) ? 'Date is required' : null,
+      (expense) => !(expense.date instanceof Date) ? 'Date must be a valid Date object' : null,
+      (expense) => (expense.date instanceof Date && isNaN(expense.date.getTime())) ? 'Date must be a valid date' : null,
+      (expense) => {
+        if (expense.date instanceof Date && !isNaN(expense.date.getTime())) {
+          const futureDate = new Date();
+          futureDate.setFullYear(futureDate.getFullYear() + 1);
+          if (expense.date > futureDate) {
+            return 'Date cannot be more than 1 year in the future';
+          }
+        }
+        return null;
+      },
+      
+      // UserId validations
+      (expense) => (expense.userId === undefined || expense.userId === null) ? 'UserId is required' : null,
+      (expense) => (typeof expense.userId !== 'string') ? 'UserId must be a string' : null,
+      (expense) => (!expense.userId || !expense.userId.trim()) ? 'UserId cannot be empty' : null,
+      
+      // Recurring validations
+      (expense) => {
+        if (expense.isRecurring && !expense.recurringFrequency) {
+          return 'Recurring frequency is required when isRecurring is true';
+        }
+        return null;
+      },
+      (expense) => {
+        if (expense.recurringFrequency && !['weekly', 'monthly', 'yearly'].includes(expense.recurringFrequency)) {
+          return 'Recurring frequency must be weekly, monthly, or yearly';
+        }
+        return null;
+      },
+      
+      // Optional field validations
+      (expense) => {
+        if (expense.receiptUrl && typeof expense.receiptUrl !== 'string') {
+          return 'Receipt URL must be a string';
+        }
+        return null;
+      },
+      (expense) => {
+        if (expense.tags && !Array.isArray(expense.tags)) {
+          return 'Tags must be an array';
+        }
+        return null;
+      },
+      (expense) => {
+        if (expense.tags && expense.tags.some((tag: any) => typeof tag !== 'string')) {
+          return 'All tags must be strings';
+        }
+        return null;
+      },
+      
       // Add global validation rule that tightly couples to GlobalState
       (expense) => {
         if (!GlobalValidationUtils.validateGlobalRules(expense)) {
@@ -280,7 +348,96 @@ class ExpenseValidator implements IExpenseValidator {
 
   private initializeUpdateValidationRules(): void {
     this.updateValidationRules.push(
-      (updates) => (updates.amount !== undefined && updates.amount < 0) ? 'Amount cannot be negative' : null,
+      // Amount validations
+      (updates) => {
+        if (updates.amount !== undefined) {
+          if (updates.amount === null) return 'Amount cannot be null';
+          if (typeof updates.amount !== 'number' || isNaN(updates.amount)) return 'Amount must be a valid number';
+          if (updates.amount < 0) return 'Amount cannot be negative';
+        }
+        return null;
+      },
+      
+      // Description validations
+      (updates) => {
+        if (updates.description !== undefined) {
+          if (updates.description === null) return 'Description cannot be null';
+          if (typeof updates.description !== 'string') return 'Description must be a string';
+          if (!updates.description.trim()) return 'Description cannot be empty';
+          if (updates.description.length > 500) return 'Description cannot exceed 500 characters';
+        }
+        return null;
+      },
+      
+      // Category validations
+      (updates) => {
+        if (updates.category !== undefined) {
+          if (updates.category === null) return 'Category cannot be null';
+          if (typeof updates.category !== 'string') return 'Category must be a string';
+          if (!updates.category.trim()) return 'Category cannot be empty';
+          if (updates.category.length > 100) return 'Category cannot exceed 100 characters';
+        }
+        return null;
+      },
+      
+      // Date validations
+      (updates) => {
+        if (updates.date !== undefined) {
+          if (updates.date === null) return 'Date cannot be null';
+          if (!(updates.date instanceof Date)) return 'Date must be a valid Date object';
+          if (isNaN(updates.date.getTime())) return 'Date must be a valid date';
+          const futureDate = new Date();
+          futureDate.setFullYear(futureDate.getFullYear() + 1);
+          if (updates.date > futureDate) return 'Date cannot be more than 1 year in the future';
+        }
+        return null;
+      },
+      
+      // UserId validations
+      (updates) => {
+        if (updates.userId !== undefined) {
+          if (updates.userId === null) return 'UserId cannot be null';
+          if (typeof updates.userId !== 'string') return 'UserId must be a string';
+          if (!updates.userId.trim()) return 'UserId cannot be empty';
+        }
+        return null;
+      },
+      
+      // Recurring validations
+      (updates) => {
+        if (updates.isRecurring !== undefined && updates.isRecurring && !updates.recurringFrequency) {
+          return 'Recurring frequency is required when isRecurring is true';
+        }
+        return null;
+      },
+      (updates) => {
+        if (updates.recurringFrequency !== undefined && 
+            updates.recurringFrequency !== null &&
+            !['weekly', 'monthly', 'yearly'].includes(updates.recurringFrequency)) {
+          return 'Recurring frequency must be weekly, monthly, or yearly';
+        }
+        return null;
+      },
+      
+      // Optional field validations
+      (updates) => {
+        if (updates.receiptUrl !== undefined && updates.receiptUrl !== null && typeof updates.receiptUrl !== 'string') {
+          return 'Receipt URL must be a string';
+        }
+        return null;
+      },
+      (updates) => {
+        if (updates.tags !== undefined) {
+          if (updates.tags !== null && !Array.isArray(updates.tags)) {
+            return 'Tags must be an array';
+          }
+          if (Array.isArray(updates.tags) && updates.tags.some((tag: any) => typeof tag !== 'string')) {
+            return 'All tags must be strings';
+          }
+        }
+        return null;
+      },
+      
       // Tight coupling to global configuration
       (updates) => {
         const globalState = GlobalApplicationState.getInstance();
