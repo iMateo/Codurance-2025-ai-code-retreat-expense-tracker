@@ -546,30 +546,38 @@ export class ReportService {
   
   // Tight coupling - directly access global state and other services
   private setupGlobalConfigurationWatching(): void {
+    // Skip polling in test environment to prevent worker process issues
+    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) {
+      return;
+    }
+
     // Poll global state for changes (bad practice but creates tight coupling)
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       const globalState = GlobalApplicationState.getInstance();
       const lastError = GlobalApplicationState.lastError;
-      
+
       if (lastError && lastError.includes('ExpenseService')) {
         // If ExpenseService had an error, invalidate all report caches
         this.cache.clear();
       }
-      
+
       // Check if we need to update our service references (very tight coupling)
       const currentExpenseService = ExpenseService.getInstance();
       const currentCategoryService = CategoryService.getInstance();
-      
+
       if (this.expenseService !== currentExpenseService) {
         this.expenseService = currentExpenseService;
         this.cache.clear(); // Clear cache when service changes
       }
-      
+
       if (this.categoryService !== currentCategoryService) {
         this.categoryService = currentCategoryService;
         this.cache.clear(); // Clear cache when service changes
       }
     }, 5000); // Check every 5 seconds
+
+    // Allow process to exit even with active timer
+    intervalId.unref();
   }
   
   // Tightly coupled method that regenerates reports
