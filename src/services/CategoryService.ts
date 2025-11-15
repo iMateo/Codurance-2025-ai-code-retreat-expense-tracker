@@ -1,5 +1,6 @@
 import { Category, Expense } from '../types/expense.js';
 import { CategoryManager } from '../core/CategoryManager.js';
+import { StorageService } from '../core/StorageService.js';
 
 /**
  * Adapter for old CategoryService API
@@ -11,10 +12,33 @@ export class CategoryService {
   private static instance: CategoryService;
 
   constructor() {
-    this.manager = new CategoryManager();
+    // Create manager with persistence callback
+    this.manager = new CategoryManager(() => this.saveToStorage());
     CategoryService.instance = this;
 
+    // Load data from localStorage if available
+    this.loadFromStorage();
+
     // Removed window registration - no longer needed
+  }
+
+  /**
+   * Save current state to localStorage
+   */
+  private saveToStorage(): void {
+    const categories = this.manager.findAll();
+    StorageService.saveCategories(categories);
+  }
+
+  /**
+   * Load state from localStorage
+   */
+  private loadFromStorage(): void {
+    const stored = StorageService.loadCategories();
+    if (stored && stored.length > 0) {
+      this.manager.clear();
+      this.manager.loadFromArray(stored);
+    }
   }
 
   public static getInstance(): CategoryService {

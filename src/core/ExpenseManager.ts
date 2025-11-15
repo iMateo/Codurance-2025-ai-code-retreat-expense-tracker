@@ -7,8 +7,10 @@ import { generateId } from './utils.js';
  */
 export class ExpenseManager {
   private expenses = new Map<string, Expense>();
+  private onDataChange?: () => void;
 
-  constructor() {
+  constructor(onDataChange?: () => void) {
+    this.onDataChange = onDataChange;
     // Load sample data for test compatibility
     this.loadSampleData();
   }
@@ -32,6 +34,7 @@ export class ExpenseManager {
     };
 
     this.expenses.set(expense.id, expense);
+    this.notifyDataChange();
     return expense;
   }
 
@@ -66,6 +69,7 @@ export class ExpenseManager {
 
     const updated = { ...expense, ...updates };
     this.expenses.set(id, updated);
+    this.notifyDataChange();
     return updated;
   }
 
@@ -73,7 +77,11 @@ export class ExpenseManager {
    * Delete expense
    */
   delete(id: string): boolean {
-    return this.expenses.delete(id);
+    const result = this.expenses.delete(id);
+    if (result) {
+      this.notifyDataChange();
+    }
+    return result;
   }
 
   /**
@@ -161,6 +169,33 @@ export class ExpenseManager {
 
   private normalizeCategory(category: string): string {
     return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  }
+
+  /**
+   * Notify listeners about data changes
+   */
+  private notifyDataChange(): void {
+    if (this.onDataChange) {
+      this.onDataChange();
+    }
+  }
+
+  /**
+   * Load expenses from array (for storage restoration)
+   */
+  loadFromArray(expenses: Expense[]): void {
+    this.expenses.clear();
+    expenses.forEach(expense => {
+      this.expenses.set(expense.id, expense);
+    });
+  }
+
+  /**
+   * Clear all expenses
+   */
+  clear(): void {
+    this.expenses.clear();
+    this.notifyDataChange();
   }
 
   private loadSampleData(): void {

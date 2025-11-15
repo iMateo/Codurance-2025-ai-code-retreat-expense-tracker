@@ -7,8 +7,10 @@ import { generateId } from './utils.js';
  */
 export class CategoryManager {
   private categories = new Map<string, Category>();
+  private onDataChange?: () => void;
 
-  constructor() {
+  constructor(onDataChange?: () => void) {
+    this.onDataChange = onDataChange;
     this.loadDefaultCategories();
   }
 
@@ -38,6 +40,7 @@ export class CategoryManager {
     };
 
     this.categories.set(category.id, category);
+    this.notifyDataChange();
     return category;
   }
 
@@ -66,6 +69,7 @@ export class CategoryManager {
 
     const updated = { ...category, ...updates };
     this.categories.set(id, updated);
+    this.notifyDataChange();
     return updated;
   }
 
@@ -79,6 +83,7 @@ export class CategoryManager {
     }
 
     category.isActive = false;
+    this.notifyDataChange();
     return true;
   }
 
@@ -86,7 +91,11 @@ export class CategoryManager {
    * Hard delete category
    */
   hardDelete(id: string): boolean {
-    return this.categories.delete(id);
+    const result = this.categories.delete(id);
+    if (result) {
+      this.notifyDataChange();
+    }
+    return result;
   }
 
   /**
@@ -99,6 +108,7 @@ export class CategoryManager {
     }
 
     category.isActive = true;
+    this.notifyDataChange();
     return true;
   }
 
@@ -197,6 +207,33 @@ export class CategoryManager {
     }
 
     return errors;
+  }
+
+  /**
+   * Notify listeners about data changes
+   */
+  private notifyDataChange(): void {
+    if (this.onDataChange) {
+      this.onDataChange();
+    }
+  }
+
+  /**
+   * Load categories from array (for storage restoration)
+   */
+  loadFromArray(categories: Category[]): void {
+    this.categories.clear();
+    categories.forEach(category => {
+      this.categories.set(category.id, category);
+    });
+  }
+
+  /**
+   * Clear all categories
+   */
+  clear(): void {
+    this.categories.clear();
+    this.notifyDataChange();
   }
 
   private loadDefaultCategories(): void {
